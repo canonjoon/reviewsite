@@ -32,7 +32,7 @@ def list():
     # 페이지 값 (없을경우 기본값은 1)
     page = request.args.get("page", 1, type=int)
     # 한페이지당 몇개를 출력할지
-    limit = request.args.get("limit", 3, type=int)
+    limit = request.args.get("limit", 5, type=int)
     board = mongo.db.board
     datas = board.find({}).skip((page - 1) * limit).limit(limit)  # 스킵 사용 페이지
 
