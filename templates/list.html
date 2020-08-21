@@ -1,11 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>List</title>
 </head>
+
 <body>
+
+    <script>
+        #온클릭 함수 작성 시작.
+    </script>
 
     {% if datas.count() > 0 %}
     <table>
@@ -22,12 +28,12 @@
             <!-- 반복 시작 -->
             {% for data in datas %}
             <tr>
-                <td>{{loop.index}}</td>
+                <td>{{loop.index}}</td> <!-- 번호 자동 생성 -->
                 <td><a href="{{url_for('board_view', idx=data._id)}}">{{data.title}}</a></td>
                 <td>{{data.name}}</td>
                 <td>{{data.pubdate | formatdatetime}}</td>
                 <td>{{data.view}}</td>
-                
+
             </tr>
             {% endfor %}
             <!-- 반복 끝 -->
@@ -37,34 +43,45 @@
     </table>
 
     {% if block_start - 1 >0 %}
-        <a href="{{url_for('list', page=block_start - 1)}}">[이전]</a>
+    <a href="{{url_for('list', page=block_start - 1)}}">[이전]</a>
     {% endif %}
 
     {% for i in range(block_start, block_last + 1) %}
     <!-- 페이지가 마지막장보다 크면 링크 없이 출력 -->
-        {% if i > last_page_num %} 
-            <em style="color:lightgray;">{{i}}</em>
-        {% else %}
-            {% if i ==page %}
-                <b>{{i}}</b>
-            
-            {% else %}
-                <a href="{{url_for('list', page = i )}}">{{i}}</a>
-            {% endif %}
+    {% if i > last_page_num %}
+    <em style="color:lightgray;">{{i}}</em>
+    {% else %}
+    {% if i ==page %}
+    <b>{{i}}</b>
 
-        {% endif %}
-    
+    {% else %}
+    <a href="{{url_for('list', page = i )}}">{{i}}</a>
+    {% endif %}
+
+    {% endif %}
+
     {% endfor %}
 
     {% if block_last < last_page_num %}
-        <a href="{{url_for('list', page=block_last + 1)}}">[다음]</a>
+    <a href="{{url_for('list', page=block_last + 1)}}">[다음]</a>
     {% endif %}
+
+    <select name="search" id="">
+        <option value=""> 검색 대상 </option>
+        <option value="0">제목</option>
+        <option value="1">내용</option>
+        <option value="2">제목+내용</option>
+        <option value="3">작성자</option>
+    </select>
+    <input type="text" name="keyword" id="keyword">
+
 
     {% else %}
     데이터가 없습니다.
 
     {% endif %}
 
-    
+
 </body>
+
 </html>
