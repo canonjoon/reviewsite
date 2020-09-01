@@ -28,6 +28,10 @@
     {% if datas.count() > 0 %}
     <table>
         <thead>
+           {{session["name"]}}
+           {{session["email"]}}
+           {{session["id"]}}
+
             <tr>
                 <td>번호</td>
                 <td>제목</td>

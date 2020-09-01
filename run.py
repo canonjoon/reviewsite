@@ -7,15 +7,18 @@ from datetime import datetime
 from bson.objectid import ObjectId
 from flask import abort
 import time
+from datetime import timedelta
 from flask import redirect
 from flask import url_for
 from flask import flash
+from flask import session
 import math
 
 
 app = Flask(__name__)
 app.config["MONGO_URI"] = "mongodb://localhost:27017/reviewsite"
 app.config["SECRET_KEY"] = "abcd"
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
 mongo = PyMongo(app)
 
 
@@ -176,6 +179,33 @@ def member_join():
         return ""
     else:
         return render_template("join.html")
+
+
+@app.route("/login", methods=["GET", "POST"])
+def member_login():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("pass")
+
+        members = mongo.db.members
+        data = members.find_one({"email": email})
+        if data is None:
+            flash("회원 정보가 없습니다.")
+            return render_template("login.html")
+        else:
+            if data.get("pass") == password:
+                session["email"] = email  # 로그인 성공시 세션에 임시로 저장. 
+                session["name"] = data.get("name")
+                session["id"] = str(data.get("_id"))
+                session.permanent = True
+                return redirect(url_for("lists"))
+            else:
+                flash("비밀번호가 일치하지 않습니다")
+                return render_template("login.html")
+
+        return ""
+    else:
+        return render_template("login.html")
 
 
 if __name__ == "__main__":
