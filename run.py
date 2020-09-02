@@ -121,9 +121,10 @@ def board_view(idx):  # 팬시 스타일로 할 때,idx를 인자로 받아버�
                 "contents": data.get("contents"),
                 "pubdate": data.get("pubdate"),
                 "view": data.get("view"),
+                "writer_id": data.get("writer_id", "")
 
             }
-            return render_template("view.html", result=result,page=page,search=search,keyword=keyword)
+            return render_template("view.html", result=result, page=page, search=search, keyword=keyword)
     return abort(400)
 
 
@@ -144,6 +145,7 @@ def board_write():
             "title": title,
             "contents": contents,
             "pubdate": current_utc_time,
+            "writer_id": session.get("id"),
             "view": 0,
         }
 
@@ -163,7 +165,7 @@ def member_join():
         pass1 = request.form.get("pass", type=str)
         pass2 = request.form.get("pass2", type=str)
 
-        if name =="" or email =="" or pass1 =="" or pass2 =="":
+        if name == "" or email == "" or pass1 == "" or pass2 == "":
             flash("입력되지 않는 값이 있습니다")
             return render_template("join.html")
         if pass1 != pass2:
@@ -226,7 +228,48 @@ def member_login():
             return render_template("login.html", next_url=next_url)
         else:
             return render_template("login.html")
-  
+
+
+@app.route("/edit/<idx>", methods=["GET", "POST"])
+def board_edit(idx):
+    if request.method == "GET":
+        board = mongo.db.board
+        data = board.find_one({"_id": ObjectId(idx)})
+        if data is None:
+            flash("해당 게시물이 존재하지 않습니다.")
+            return redirect(url_for("lists"))
+        else:
+            if session.get("id") == data.get("writer_id"):
+                return render_template("edit.html", data=data)
+            else:
+                flash("글 수정 권한이 없습니다.")
+                return redirect(url_for("lists"))
+    else:
+        title = request.form.get("title")
+        contents = request.form.get("contents")
+
+        board = mongo.db.board
+        data = board.find_one({"_id": ObjectId(idx)})
+
+        if session.get("id") == data.get("writer_id"):
+            board.update_one({"_id": ObjectId(idx)}, {
+                "$set": {
+                    "title": title,
+                    "contents": contents,
+                }
+            })
+            flash("수정되었습니다")
+            return redirect(url_for("board_view", idx=idx))
+        else:
+            flash("글 수정 권한이 없습니다!!!!.")
+            return redirect(url_for("lists"))
+
+    return ""
+
+
+@app.route("/delete/<idx>")
+def board_delete(idx):
+    return ""
 
 
 if __name__ == "__main__":
