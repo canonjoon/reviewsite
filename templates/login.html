@@ -15,6 +15,9 @@
     {% endwith %}
     <table>
         <form name="login" action="/login" method="POST">
+        {% if next_url %}
+            <input type="hidden" name="next_url" value="{{next_url}}">
+        {% endif %}
             <thead>
                 <caption> 회원 로그인 </caption>
             </thead>

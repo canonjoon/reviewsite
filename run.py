@@ -12,14 +12,24 @@ from flask import redirect
 from flask import url_for
 from flask import flash
 from flask import session
+from functools import wraps
 import math
 
 
 app = Flask(__name__)
 app.config["MONGO_URI"] = "mongodb://localhost:27017/reviewsite"
 app.config["SECRET_KEY"] = "abcd"
-app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=1)
 mongo = PyMongo(app)
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("id") is None or session.get("id") == "":
+            return redirect(url_for("member_login", next_url=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 @app.template_filter("formatdatetime")  # 작성시간 구하기 함수
@@ -93,6 +103,7 @@ def lists():
 
 
 @app.route("/view/<idx>")  # 팬시 스타일로 바꿈, 요즘 스타일임.
+@login_required
 def board_view(idx):  # 팬시 스타일로 할 때,idx를 인자로 받아버림.
     # idx = request.args.get("idx") # 팬시 스타일로 바뀌면서 필요 없어짐
     if idx is not None:
@@ -117,6 +128,7 @@ def board_view(idx):  # 팬시 스타일로 할 때,idx를 인자로 받아버�
 
 
 @app.route("/write", methods=["GET", "POST"])
+@login_required
 def board_write():
     if request.method == "POST":
         name = request.form.get("name")
@@ -186,6 +198,7 @@ def member_login():
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("pass")
+        next_url = request.form.get("next_url")
 
         members = mongo.db.members
         data = members.find_one({"email": email})
@@ -198,14 +211,22 @@ def member_login():
                 session["name"] = data.get("name")
                 session["id"] = str(data.get("_id"))
                 session.permanent = True
-                return redirect(url_for("lists"))
+                if next_url is not None:
+                    return redirect(next_url)
+                else:
+                    return redirect(url_for("lists"))
             else:
                 flash("비밀번호가 일치하지 않습니다")
                 return render_template("login.html")
 
         return ""
     else:
-        return render_template("login.html")
+        next_url = request.args.get("next_url", type=str)
+        if next_url is not None:
+            return render_template("login.html", next_url=next_url)
+        else:
+            return render_template("login.html")
+  
 
 
 if __name__ == "__main__":
