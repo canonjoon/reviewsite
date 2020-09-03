@@ -40,11 +40,13 @@
                 </tr>
                 <tr>
                     <td colspan="2"><input type="submit" value="가입하기"></td>
+                    
                 </tr>
             </tbody>
         </form>
     </table>
-
+    <a href="{{url_for('lists',  page=page, search=search, keyword=keyword)}}">리스트 화면으로</a><br>
+    <a href="{{url_for('member_login')}}">로그인 화면으로</a>
 
 </body>
 

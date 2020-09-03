@@ -47,10 +47,10 @@ def lists():
     # 페이지 값 (없을경우 기본값은 1)
     page = request.args.get("page", 1, type=int)
     # 한페이지당 몇개를 출력할지
-    limit = request.args.get("limit", 5, type=int)
+    limit = request.args.get("limit", 9, type=int)
 
     search = request.args.get("search", -1, type=int)
-    keyword = request.args.get("keyword", type=str)
+    keyword = request.args.get("keyword", "", type=str)
     if keyword is None:
         keyword = ""
 
@@ -76,7 +76,7 @@ def lists():
     # print(query)
 
     board = mongo.db.board
-    datas = board.find(query).skip((page - 1) * limit).limit(limit)  # 스킵 사용 페이지
+    datas = board.find(query).skip((page - 1) * limit).limit(limit).sort("pubdate", -1)  # 스킵 사용 페이지
 
     # 게시물 총 갯수
     tot_count = board.find(query).count()
@@ -112,6 +112,7 @@ def board_view(idx):  # 팬시 스타일로 할 때,idx를 인자로 받아버�
         keyword = request.args.get("keyword", type=str)
         board = mongo.db.board
         data = board.find_one({"_id": ObjectId(idx)})
+        data = board.find_one_and_update({"_id": ObjectId(idx)}, {"$inc": {"view": 1}}, return_document=True)
 
         if data is not None:
             result = {
@@ -190,7 +191,7 @@ def member_join():
 
         members.insert_one(post)
 
-        return ""
+        return redirect(url_for("lists")) # 가입 후 리스트로 가기 (canon)
     else:
         return render_template("join.html")
 
@@ -262,13 +263,22 @@ def board_edit(idx):
             return redirect(url_for("board_view", idx=idx))
         else:
             flash("글 수정 권한이 없습니다!!!!.")
-            return redirect(url_for("lists"))
+        return redirect(url_for("lists"))
 
     return ""
 
 
 @app.route("/delete/<idx>")
 def board_delete(idx):
+    board = mongo.db.board
+    data = board.find_one({"_id": ObjectId(idx)})
+    if data.get("writer_id") == session.get("id"):
+        board.delete_one({"_id": ObjectId(idx)})
+        flash("삭제되었습니다.")
+    else:
+        flash("삭제 권한이 없습니다.")
+    return redirect(url_for("lists"))
+        
     return ""
 
 
